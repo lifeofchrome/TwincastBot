@@ -15,10 +15,12 @@ import java.util.Map;
 public class Main {
     public static String prefix = "!";
     public static JDA jda;
-    public Map<String,CommandInterface>  commands = new HashMap<>();
+    public static Map<String,CommandInterface> commands = new HashMap<>();
+
 
     //register JDA
     public static void main(String args[]) {
+
         try {
             jda = new JDABuilder().addListener(new TwincastListener()).setBotToken("MjM5NDU5Mjc5ODgxNTAyNzQx.Cu1FuQ.bvv6Tk577Qh-Zf_6RB-F5n0F1P4").buildBlocking();
         } catch (LoginException e) {
