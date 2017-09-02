@@ -1,16 +1,21 @@
 from discord.ext import commands
 from discord import Embed
 from discord.ext.commands import BucketType
+import rethinkdb as r
 
 
 class Submit:  # Inside this class we make our own command.
 
     def __init__(self, bot):
         self.bot = bot  # Makes this class a command/extension
+        self.db = r.connect(db='twincastbot')
+        r.db('twincastbot').table_create('users').run(self.db)
 
     @commands.command(aliases=["s"], description="Submit a word")  # @commands.command is used to initialize the command
     @commands.cooldown(1, 8, BucketType.user)
     async def submit(self, ctx, word: str):  # the function's name is our command name.
+        user_id = ctx.author.id
+
         with open("english_words.txt") as word_file:
             english_words = set(word.strip().lower() for word in word_file)
             print("%s, %s" % (word, str(word.lower() in english_words)))
@@ -20,6 +25,13 @@ class Submit:  # Inside this class we make our own command.
                         await ctx.send(
                             embed=Embed(description=":tada: Your word twincasted!",
                                         colour=0x00FFFF))
+
+                        if r.table('users').get(user_id).run(self.db):
+                            r.table('users').get(user_id).update(
+                                {"twincasts": r.table('users').get(user_id)['twincasts'].run(self.db) + 1})
+                        else:
+                            r.table('users').insert({"id": user_id, "twincasts": 1})
+
                     else:
                         await ctx.send(embed=Embed(description=":white_check_mark: Your word, %s, was submitted and "
                                                                "matched **fang**." % word,
