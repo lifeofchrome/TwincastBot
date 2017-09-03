@@ -12,7 +12,10 @@ class UserInfo:  # Inside this class we make our own command.
 
     @commands.command(aliases=["stats", "pinfo", "user", "u"], description="Get Twincast info about a user")
     @commands.cooldown(1, 8, BucketType.user)
-    async def userinfo(self, ctx, user: Member):  # the function's name is our command name.
+    async def userinfo(self, ctx, user: Member = None):  # the function's name is our command name.
+        if not user:
+            user = ctx.author
+
         if r.table('users').get(str(user.id)).run(self.connection):
             if r.table('users').get(str(user.id)).has_fields('twincasts').run(self.connection):
                 twincasts = r.table('users').get(str(user.id)).run(self.connection)['twincasts']
