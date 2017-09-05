@@ -8,7 +8,9 @@ class Ping:  # Inside this class we make our own command.
     def __init__(self, bot):
         self.bot = bot  # Makes this class a command/extension
 
-    @commands.command(description="Check bot connection")  # @commands.command is used to initialize your command.
+    @commands.command(help="Check bot response time\nGreen is <250ms\nYellow is 250-500ms\nRed is >500ms",
+                      brief="Check bot connection", description="Check bot connection")
+    # @commands.command is used to initialize your command.
     @commands.cooldown(1, 8, BucketType.user)
     async def ping(self, ctx):  # the function's name is our command name.
             ping_time = int(round(time.time() * 1000))  # Picks the current time in milliseconds.

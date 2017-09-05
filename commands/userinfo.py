@@ -10,7 +10,9 @@ class UserInfo:  # Inside this class we make our own command.
         self.bot = bot  # Makes this class a command/extension
         self.connection = r.connect(db='twincastbot')
 
-    @commands.command(aliases=["stats", "pinfo", "user", "u"], description="Get Twincast info about a user")
+    @commands.command(aliases=["stats", "pinfo", "user", "u"], description="Get Twincast info about a user",
+                      help="Shows how many twincasts, single casts, and failures a user has", usage="<user>",
+                      brief="Get Twincast info about a user")
     @commands.cooldown(1, 8, BucketType.user)
     async def userinfo(self, ctx, user: Member = None):  # the function's name is our command name.
         if not user:

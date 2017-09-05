@@ -9,7 +9,7 @@ Commands:''' # The description of the bot when typing chromebot help
 startup_extensions = [
     "commands.ping",
     "commands.submit",
-    "commands.userinfo"
+    "commands.userinfo",
 ]
 
 # the variable "bot" will define our Discord bot's commands.
