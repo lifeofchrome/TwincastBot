@@ -49,11 +49,11 @@ class Submit:  # Inside this class we make our own command.
                             print(r.table('users').get(user_id).run(self.connection))
 
                             await self.bot.get_channel(232353777053728770).send(f"**{word}** ({ctx.author.name})")
-                            self.update_leaderboard()
+                            await self.update_leaderboard()
 
                         else:
-                            await ctx.send(embed=Embed(description=":white_check_mark: Your word, %s, was submitted and "
-                                                                   "matched **fang**." % word,
+                            await ctx.send(embed=Embed(description=":white_check_mark: Your word, %s, was submitted and"
+                                                                   " matched **fang**." % word,
                                                        colour=0x00FF00))
                             if r.table('users').get(user_id).run(self.connection):
                                 if r.table('users').get(user_id).has_fields('single_casts').run(self.connection):
@@ -68,7 +68,7 @@ class Submit:  # Inside this class we make our own command.
                                 print("added " + user_id + " to the db")
                             print(r.table('users').get(user_id).run(self.connection))
                             await self.bot.get_channel(232353685227831296).send(f"**{word}** ({ctx.author.name})")
-                            self.update_leaderboard()
+                            await self.update_leaderboard()
 
                     elif "b" in word:
                         await ctx.send(embed=Embed(description=":white_check_mark: Your word, %s, was submitted and "
@@ -87,7 +87,7 @@ class Submit:  # Inside this class we make our own command.
                             print("added " + user_id + " to the db")
                         print(r.table('users').get(user_id).run(self.connection))
                         await self.bot.get_channel(232353744702930944).send(f"**{word}** ({ctx.author.name})")
-                        self.update_leaderboard()
+                        await self.update_leaderboard()
 
                     else:
                         await ctx.send(embed=Embed(description=":no_entry_sign: Your word, %s, was submitted and "
@@ -106,25 +106,29 @@ class Submit:  # Inside this class we make our own command.
                             print("added " + user_id + " to the db")
                         print(r.table('users').get(user_id).run(self.connection))
                         await self.bot.get_channel(232353821932650496).send(f"**{word}** ({ctx.author.name})")
-                        self.update_leaderboard()
+                        await self.update_leaderboard()
                 else:
                     await ctx.send(
                         embed=Embed(description=":x: Your word, %s, isn't 6 or more characters long and wasn't "
                                                 "submitted." % word, colour=0xFF0000))
             else:
                 await ctx.send(embed=Embed(description=":x: Your word, %s, isn't a word and wasn't submitted." % word,
-                                               colour=0xFF0000))
+                                           colour=0xFF0000))
 
     async def create_leaderboard(self):
+        conn = r.connect(db='twincastbot')
         await self.bot.get_channel(232937599537381377).send(embed=Embed(
-            title="Top Twincasters", description=str(r.table('users').sort_by(r.desc('twincasts')).limit(3).run())))
+            title="Top Twincasters", description=str(r.table('users').order_by(r.desc('twincasts')).limit(3).
+                                                     run(conn))))
 
     async def update_leaderboard(self):
-        if self.bot.get_channel(232937599537381377).history().get():
+        conn = r.connect(db='twincastbot')
+        if await self.bot.get_channel(232937599537381377).history().get():
             await self.bot.get_channel(232937599537381377).history().get().edit(embed=Embed(
-                title="Top Twincasters", description=str(r.table('users').sort_by(r.desc('twincasts')).limit(3).run())))
+                title="Top Twincasters", description=str(r.table('users').order_by(r.desc('twincasts')).limit(3).
+                                                         run(conn))))
         else:
-            self.create_leaderboard()
+            await self.create_leaderboard()
 
 
 def setup(bot):  # This function outside of the class initializes our extension/command and makes it readable by the
