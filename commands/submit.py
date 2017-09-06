@@ -123,8 +123,8 @@ class Submit:  # Inside this class we make our own command.
 
     async def update_leaderboard(self):
         conn = r.connect(db='twincastbot')
-        if await self.bot.get_channel(232937599537381377).history().get():
-            await self.bot.get_channel(232937599537381377).history().get().edit(embed=Embed(
+        if await (self.bot.get_channel(232937599537381377).history()).next():
+            await (self.bot.get_channel(232937599537381377).history()).next().edit(embed=Embed(
                 title="Top Twincasters", description=str(r.table('users').order_by(r.desc('twincasts')).limit(3).
                                                          run(conn))))
         else:
