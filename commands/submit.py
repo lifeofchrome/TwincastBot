@@ -13,9 +13,10 @@ class Submit:  # Inside this class we make our own command.
         try:
             r.db_create('twincastbot').run(self.connection)
             r.db('twincastbot').table_create('users').run(self.connection)
-            print('Database \'twincastbot\' and table \'users\' created.')
+            r.db('twincastbot').table_create('words').run(self.connection)
+            print('Database \'twincastbot\' and tables \'users\', \'words\' created.')
         except RqlRuntimeError:
-            print('Database and table already exist.')
+            print('Database and tables already exist.')
 
     @commands.command(aliases=["s"], description="Submit a word.",
                       help="Submits a word.\nOnly 6 letter English words are submitted.", usage="<word>")
@@ -29,31 +30,51 @@ class Submit:  # Inside this class we make our own command.
             print("%s, %s" % (word, str(word.lower() in english_words)))
             if word.lower() in english_words:
                 if len(word) > 5:
-                    if "a" in word:
-                        if "b" in word:
-                            await ctx.send(
-                                embed=Embed(description=":tada: Your word twincasted!",
-                                            colour=0x00FFFF))
+                    if r.table('words').filter(r.row['word'] == word).count().run(self.connection) == 0:
+                        if "a" in word:
+                            if "b" in word:
+                                await ctx.send(
+                                    embed=Embed(description=":tada: Your word twincasted!",
+                                                colour=0x00FFFF))
 
-                            if r.table('users').get(user_id).run(self.connection):
-                                if r.table('users').get(user_id).has_fields('twincasts').run(self.connection):
-                                    r.table('users').get(user_id).update(
-                                        {"twincasts":
-                                            r.table('users').get(user_id)['twincasts'].run(self.connection) + 1}
-                                    ).run(self.connection)
+                                if r.table('users').get(user_id).run(self.connection):
+                                    if r.table('users').get(user_id).has_fields('twincasts').run(self.connection):
+                                        r.table('users').get(user_id).update(
+                                            {"twincasts":
+                                                r.table('users').get(user_id)['twincasts'].run(self.connection) + 1}
+                                        ).run(self.connection)
+                                    else:
+                                        r.table('users').get(user_id).update({"twincasts": 1}).run(self.connection)
                                 else:
-                                    r.table('users').get(user_id).update({"twincasts": 1}).run(self.connection)
+                                    r.table('users').insert({"id": user_id, "twincasts": 1}).run(self.connection)
+                                    print("added " + user_id + " to the db")
+                                print(r.table('users').get(user_id).run(self.connection))
+
+                                await self.bot.get_channel(232353777053728770).send(f"**{word}** ({ctx.author.name})")
+                                await self.update_leaderboard()
+
                             else:
-                                r.table('users').insert({"id": user_id, "twincasts": 1}).run(self.connection)
-                                print("added " + user_id + " to the db")
-                            print(r.table('users').get(user_id).run(self.connection))
+                                await ctx.send(embed=Embed(description=":white_check_mark: Your word, %s, was submitted"
+                                                                       " and matched **fang**." % word,
+                                                           colour=0x00FF00))
+                                if r.table('users').get(user_id).run(self.connection):
+                                    if r.table('users').get(user_id).has_fields('single_casts').run(self.connection):
+                                        r.table('users').get(user_id).update(
+                                            {"single_casts":
+                                                r.table('users').get(user_id)['single_casts'].run(self.connection) + 1}
+                                        ).run(self.connection)
+                                    else:
+                                        r.table('users').get(user_id).update({"single_casts": 1}).run(self.connection)
+                                else:
+                                    r.table('users').insert({"id": user_id, "single_casts": 1}).run(self.connection)
+                                    print("added " + user_id + " to the db")
+                                print(r.table('users').get(user_id).run(self.connection))
+                                await self.bot.get_channel(232353685227831296).send(f"**{word}** ({ctx.author.name})")
+                                await self.update_leaderboard()
 
-                            await self.bot.get_channel(232353777053728770).send(f"**{word}** ({ctx.author.name})")
-                            await self.update_leaderboard()
-
-                        else:
+                        elif "b" in word:
                             await ctx.send(embed=Embed(description=":white_check_mark: Your word, %s, was submitted and"
-                                                                   " matched **fang**." % word,
+                                                                   " matched **cabinet**." % word,
                                                        colour=0x00FF00))
                             if r.table('users').get(user_id).run(self.connection):
                                 if r.table('users').get(user_id).has_fields('single_casts').run(self.connection):
@@ -67,46 +88,32 @@ class Submit:  # Inside this class we make our own command.
                                 r.table('users').insert({"id": user_id, "single_casts": 1}).run(self.connection)
                                 print("added " + user_id + " to the db")
                             print(r.table('users').get(user_id).run(self.connection))
-                            await self.bot.get_channel(232353685227831296).send(f"**{word}** ({ctx.author.name})")
+                            await self.bot.get_channel(232353744702930944).send(f"**{word}** ({ctx.author.name})")
                             await self.update_leaderboard()
 
-                    elif "b" in word:
-                        await ctx.send(embed=Embed(description=":white_check_mark: Your word, %s, was submitted and "
-                                                               "matched **cabinet**." % word,
-                                                   colour=0x00FF00))
-                        if r.table('users').get(user_id).run(self.connection):
-                            if r.table('users').get(user_id).has_fields('single_casts').run(self.connection):
-                                r.table('users').get(user_id).update(
-                                    {"single_casts":
-                                        r.table('users').get(user_id)['single_casts'].run(self.connection) + 1}
-                                ).run(self.connection)
-                            else:
-                                r.table('users').get(user_id).update({"single_casts": 1}).run(self.connection)
                         else:
-                            r.table('users').insert({"id": user_id, "single_casts": 1}).run(self.connection)
-                            print("added " + user_id + " to the db")
-                        print(r.table('users').get(user_id).run(self.connection))
-                        await self.bot.get_channel(232353744702930944).send(f"**{word}** ({ctx.author.name})")
-                        await self.update_leaderboard()
-
+                            await ctx.send(embed=Embed(description=":no_entry_sign: Your word, %s, was submitted and "
+                                                                   "matched nothing." % word,
+                                                       colour=0xFFFF00))
+                            if r.table('users').get(user_id).run(self.connection):
+                                if r.table('users').get(user_id).has_fields('failures').run(self.connection):
+                                    r.table('users').get(user_id).update(
+                                        {"failures":
+                                            r.table('users').get(user_id)['failures'].run(self.connection) + 1}
+                                    ).run(self.connection)
+                                else:
+                                    r.table('users').get(user_id).update({"failures": 1}).run(self.connection)
+                            else:
+                                r.table('users').insert({"id": user_id, "failures": 1}).run(self.connection)
+                                print("added " + user_id + " to the db")
+                            print(r.table('users').get(user_id).run(self.connection))
+                            await self.bot.get_channel(232353821932650496).send(f"**{word}** ({ctx.author.name})")
+                            await self.update_leaderboard()
                     else:
-                        await ctx.send(embed=Embed(description=":no_entry_sign: Your word, %s, was submitted and "
-                                                               "matched nothing." % word,
-                                                   colour=0xFFFF00))
-                        if r.table('users').get(user_id).run(self.connection):
-                            if r.table('users').get(user_id).has_fields('failures').run(self.connection):
-                                r.table('users').get(user_id).update(
-                                    {"failures":
-                                        r.table('users').get(user_id)['failures'].run(self.connection) + 1}
-                                ).run(self.connection)
-                            else:
-                                r.table('users').get(user_id).update({"failures": 1}).run(self.connection)
-                        else:
-                            r.table('users').insert({"id": user_id, "failures": 1}).run(self.connection)
-                            print("added " + user_id + " to the db")
-                        print(r.table('users').get(user_id).run(self.connection))
-                        await self.bot.get_channel(232353821932650496).send(f"**{word}** ({ctx.author.name})")
-                        await self.update_leaderboard()
+                        await ctx.send(
+                            embed=Embed(description=":x: Your word, %s, "
+                                                    "has already been submitted." % word, colour=0xFF0000))
+                    r.table('words').insert({'word': word}).run(self.connection)
                 else:
                     await ctx.send(
                         embed=Embed(description=":x: Your word, %s, isn't 6 or more characters long and wasn't "
@@ -132,7 +139,7 @@ class Submit:  # Inside this class we make our own command.
             history = self.bot.get_channel(232937599537381377).history()
             message = await history.next()
             await message.edit(embed=Embed(
-                title="Top Twincasters", description=lb_str))
+                title="Top Twincasters", description=lb_str, colour=0x0000FF))
             # str(r.table('users').order_by(r.desc('twincasts')).limit(3).run(conn))
         else:
             await self.create_leaderboard()
