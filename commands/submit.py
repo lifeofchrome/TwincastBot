@@ -123,10 +123,17 @@ class Submit:  # Inside this class we make our own command.
 
     async def update_leaderboard(self):
         conn = r.connect(db='twincastbot')
+        lb_table = r.table('users').order_by(r.desc('twincasts')).limit(3).run(conn)
+        # lb_table is the sorted leaderboard table
+        lb_str = f"1st: {self.bot.get_user(int(lb_table[0]['id'])).name}, {lb_table[0]['twincasts']} twincasts\n" \
+                 f"2nd: {self.bot.get_user(int(lb_table[1]['id'])).name}, {lb_table[1]['twincasts']} twincasts\n" \
+                 f"3rd: {self.bot.get_user(int(lb_table[2]['id'])).name}, {lb_table[2]['twincasts']} twincasts"
         if await (self.bot.get_channel(232937599537381377).history()).next():
-            await (self.bot.get_channel(232937599537381377).history()).next().edit(embed=Embed(
-                title="Top Twincasters", description=str(r.table('users').order_by(r.desc('twincasts')).limit(3).
-                                                         run(conn))))
+            history = self.bot.get_channel(232937599537381377).history()
+            message = await history.next()
+            await message.edit(embed=Embed(
+                title="Top Twincasters", description=lb_str))
+            # str(r.table('users').order_by(r.desc('twincasts')).limit(3).run(conn))
         else:
             await self.create_leaderboard()
 
