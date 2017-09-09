@@ -4,7 +4,7 @@ from discord.ext.commands import BucketType
 import time
 
 
-class Ping:  # Inside this class we make our own command.
+class Misc:  # Inside this class we make our own command.
     def __init__(self, bot):
         self.bot = bot  # Makes this class a command/extension
 
@@ -29,4 +29,4 @@ class Ping:  # Inside this class we make our own command.
 
 def setup(bot):  # This function outside of the class initializes our extension/command and makes it readable by the
     # main file, TwincastBot.py
-    bot.add_cog(Ping(bot))  # Well, yeah. adds the extension/command.
+    bot.add_cog(Misc(bot))  # Well, yeah. adds the extension/command.

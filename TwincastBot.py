@@ -8,8 +8,7 @@ Commands:''' # The description of the bot when typing chromebot help
 # so for example, "commands.ping" in this list, it will load the extension AKA command, commands/ping.py
 startup_extensions = [
     "commands.ping",
-    "commands.submit",
-    "commands.userinfo",
+    "commands.twincast",
 ]
 
 # the variable "bot" will define our Discord bot's commands.
