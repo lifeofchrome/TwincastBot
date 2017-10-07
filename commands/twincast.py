@@ -64,7 +64,7 @@ class Twincast:  # Inside this class we make our own command.
                                                              "twincasts_round_dev-2": 1}).run(self.conn)
                                     print("added " + user_id + " to the db")
                                 print(r.table('users').get(user_id).run(self.conn))
-
+                                # r.table('words').insert({"word": word}).run(self.conn)
                                 await self.bot.get_channel(232353777053728770).send(f"**{word}** ({ctx.author.name})")
                                 await self.update_leaderboard()
 
@@ -156,6 +156,7 @@ class Twincast:  # Inside this class we make our own command.
                                 print("added " + user_id + " to the db")
                             print(r.table('users').get(user_id).run(self.conn))
                             await self.bot.get_channel(232353821932650496).send(f"**{word}** ({ctx.author.name})")
+                        r.table('words').insert({'word': word}).run(self.conn)
                     else:
                         await ctx.send(embed=Embed(description=":x: Your word, %s, isn't a word and wasn't submitted." % word,
                                                colour=0xFF0000))
@@ -163,7 +164,7 @@ class Twincast:  # Inside this class we make our own command.
                     await ctx.send(
                         embed=Embed(description=":x: Your word, %s, "
                                                 "has already been submitted." % word, colour=0xFF0000))
-                r.table('words').insert({'word': word}).run(self.conn)
+
 
             else:
                 await ctx.send(
@@ -182,16 +183,20 @@ class Twincast:  # Inside this class we make our own command.
         conn = r.connect(db='twincastbot')
         lb_table = r.table('users').order_by(r.desc('twincasts')).limit(5).run(conn)
         lb_round_table = r.table('users').order_by(r.desc('twincasts_round_dev-2')).limit(5).run(conn)
+
         # lb_table is the sorted leaderboard table
         # lb_round_table is the sorted leaderboard table for the current round
+
         prefixes = ['1st', '2nd', '3rd', '4th', '5th']
         lb_str = ""
         lb_round_str = ""
         for i in range(0, 4):
-            lb_str = lb_str + f"{prefixes[i]}: {self.bot.get_user(int(lb_table[i]['id'])).name}, " \
-                              f"{lb_table[i]['twincasts']} twincasts\n"
-            lb_round_str = lb_round_str + f"{prefixes[i]}: {self.bot.get_user(int(lb_round_table[i]['id'])).name}, " \
-                                          f"{lb_round_table[i]['twincasts_round_dev-2']} twincasts\n"
+            if 'twincasts' in lb_table[i]:
+                lb_str = lb_str + f"{prefixes[i]}: {self.bot.get_user(int(lb_table[i]['id'])).name}, " \
+                                  f"{lb_table[i]['twincasts']} twincasts\n"
+            if 'twincasts_round_dev-2' in lb_round_table[i]:
+                lb_round_str = lb_round_str + f"{prefixes[i]}: {self.bot.get_user(int(lb_round_table[i]['id'])).name}, " \
+                                              f"{lb_round_table[i]['twincasts_round_dev-2']} twincasts\n"
 
         # lb_str = f"1st: {self.bot.get_user(int(lb_table[0]['id'])).name}, {lb_table[0]['twincasts']} twincasts\n" \
         #          f"2nd: {self.bot.get_user(int(lb_table[1]['id'])).name}, {lb_table[1]['twincasts']} twincasts\n" \
@@ -210,7 +215,7 @@ class Twincast:  # Inside this class we make our own command.
         #                f"{lb_round_table[4]['twincasts_round_dev-2']} twincasts"
         history = self.bot.get_channel(232937599537381377).history()
         round_name = r.table('rounds').get(r.table('info').get(0)['current_round_id'].
-                                           run(self.conn))['round_name'].run(self.conn)
+                                           run(self.conn))['name'].run(self.conn)
         if len(history) == 2:
             history.next().edit(embed=Embed(title="Top Twincasters (Global)", description=lb_str, colour=0x0000FF))
             history.next().edit(embed=Embed(title=f"Top Twincasters: Round {round_name}", description=lb_round_str,
