@@ -3,6 +3,7 @@ from discord import Embed, Member
 from discord.ext.commands import BucketType
 import rethinkdb as r
 from rethinkdb.errors import RqlRuntimeError
+import re
 
 
 class Twincast:  # Inside this class we make our own command.
@@ -10,18 +11,21 @@ class Twincast:  # Inside this class we make our own command.
     def __init__(self, bot):
         self.bot = bot  # Makes this class a command/extension
         self.connection = r.connect(db='twincastbot')
-        try:
-            r.db_create('twincastbot').run(self.connection)
-            r.db('twincastbot').table_create('users').run(self.connection)
-            r.db('twincastbot').table_create('words').run(self.connection)
-            print('Database \'twincastbot\' and tables \'users\', \'words\' created.')
-        except RqlRuntimeError:
-            print('Database and tables already exist.')
+        # try:
+        #     r.db_create('twincastbot').run(self.connection)
+        #     r.db('twincastbot').table_create('users').run(self.connection)
+        #     r.db('twincastbot').table_create('words').run(self.connection)
+        #     r.db('twincastbot').table_create('rounds').run(self.connection)
+        #     print('Database \'twincastbot\' and tables \'users\', \'words\' created.')
+        # except RqlRuntimeError:
+        #     print('Database and tables already exist.')
+        self.current_round = r.table('rounds').get(r.table('info').get(0)['current_round_id'].run(self.connection)).run(
+            self.connection)
 
     @commands.command(aliases=["s"], description="Submit a word.",
                       help="Submits a word.\nOnly 6 letter English words are submitted.", usage="<word>")
     # @commands.command is used to initialize the command
-    @commands.cooldown(1, 8, BucketType.user)
+    @commands.cooldown(1, 4, BucketType.user)
     async def submit(self, ctx, word: str):  # the function's name is our command name.
         user_id = str(ctx.author.id)
 
@@ -31,8 +35,8 @@ class Twincast:  # Inside this class we make our own command.
             if word.lower() in english_words:
                 if len(word) > 5:
                     if r.table('words').filter(r.row['word'] == word).count().run(self.connection) == 0:
-                        if "a" in word:
-                            if "b" in word:
+                        if re.match(self.current_round['pattern1'], word):
+                            if re.match(self.current_round['pattern2'], word):
                                 await ctx.send(
                                     embed=Embed(description=":tada: Your word twincasted!",
                                                 colour=0x00FFFF))
@@ -54,8 +58,9 @@ class Twincast:  # Inside this class we make our own command.
                                 await self.update_leaderboard()
 
                             else:
-                                await ctx.send(embed=Embed(description=":white_check_mark: Your word, %s, was submitted"
-                                                                       " and matched **fang**." % word,
+                                await ctx.send(embed=Embed(description=f":white_check_mark: Your word, {word}, "
+                                                                       f"was submitted and matched "
+                                                                       f"**{self.current_round['word1']}**.",
                                                            colour=0x00FF00))
                                 if r.table('users').get(user_id).run(self.connection):
                                     if r.table('users').get(user_id).has_fields('single_casts').run(self.connection):
@@ -72,10 +77,11 @@ class Twincast:  # Inside this class we make our own command.
                                 await self.bot.get_channel(232353685227831296).send(f"**{word}** ({ctx.author.name})")
                                 await self.update_leaderboard()
 
-                        elif "b" in word:
-                            await ctx.send(embed=Embed(description=":white_check_mark: Your word, %s, was submitted and"
-                                                                   " matched **cabinet**." % word,
-                                                       colour=0x00FF00))
+                        elif re.match(self.current_round['pattern2'], word):
+                            await ctx.send(embed=Embed(description=f":white_check_mark: Your word, {word}, "
+                                                                       f"was submitted and matched "
+                                                                       f"**{self.current_round['word2']}**.",
+                                                           colour=0x00FF00))
                             if r.table('users').get(user_id).run(self.connection):
                                 if r.table('users').get(user_id).has_fields('single_casts').run(self.connection):
                                     r.table('users').get(user_id).update(
