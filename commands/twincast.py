@@ -32,8 +32,8 @@ class Twincast:  # Inside this class we make our own command.
         with open("english_words.txt") as word_file:
             english_words = set(word.strip().lower() for word in word_file)
             print("%s, %s" % (word, str(word.lower() in english_words)))
-            if word.lower() in english_words:
-                if len(word) > 5:
+            if len(word) > 5:
+                if word.lower() in english_words:
                     if r.table('words').filter(r.row['word'] == word).count().run(self.conn) == 0:
                         if re.match(self.current_round['pattern1'], word):
                             if re.match(self.current_round['pattern2'], word):
@@ -132,12 +132,12 @@ class Twincast:  # Inside this class we make our own command.
                                                     "has already been submitted." % word, colour=0xFF0000))
                     r.table('words').insert({'word': word}).run(self.conn)
                 else:
-                    await ctx.send(
-                        embed=Embed(description=":x: Your word, %s, isn't 6 or more characters long and wasn't "
-                                                "submitted." % word, colour=0xFF0000))
-            else:
-                await ctx.send(embed=Embed(description=":x: Your word, %s, isn't a word and wasn't submitted." % word,
+                    await ctx.send(embed=Embed(description=":x: Your word, %s, isn't a word and wasn't submitted." % word,
                                            colour=0xFF0000))
+            else:
+                await ctx.send(
+                    embed=Embed(description=":x: Your word, %s, isn't 6 or more characters long and wasn't "
+                                "submitted." % word, colour = 0xFF0000))
 
     async def create_global_leaderboard(self):
         conn = r.connect(db='twincastbot')
