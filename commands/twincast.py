@@ -33,8 +33,8 @@ class Twincast:  # Inside this class we make our own command.
             english_words = set(word.strip().lower() for word in word_file)
             print("%s, %s" % (word, str(word.lower() in english_words)))
             if len(word) > 5:
-                if word.lower() in english_words:
-                    if r.table('words').filter(r.row['word'] == word).count().run(self.conn) == 0:
+                if r.table('words').filter(r.row['word'] == word).count().run(self.conn) == 0:
+                    if word.lower() in english_words:
                         if re.match(self.current_round['pattern1'], word):
                             if re.match(self.current_round['pattern2'], word):
                                 await ctx.send(
@@ -157,13 +157,14 @@ class Twincast:  # Inside this class we make our own command.
                             print(r.table('users').get(user_id).run(self.conn))
                             await self.bot.get_channel(232353821932650496).send(f"**{word}** ({ctx.author.name})")
                     else:
-                        await ctx.send(
-                            embed=Embed(description=":x: Your word, %s, "
-                                                    "has already been submitted." % word, colour=0xFF0000))
-                    r.table('words').insert({'word': word}).run(self.conn)
+                        await ctx.send(embed=Embed(description=":x: Your word, %s, isn't a word and wasn't submitted." % word,
+                                               colour=0xFF0000))
                 else:
-                    await ctx.send(embed=Embed(description=":x: Your word, %s, isn't a word and wasn't submitted." % word,
-                                           colour=0xFF0000))
+                    await ctx.send(
+                        embed=Embed(description=":x: Your word, %s, "
+                                                "has already been submitted." % word, colour=0xFF0000))
+                r.table('words').insert({'word': word}).run(self.conn)
+
             else:
                 await ctx.send(
                     embed=Embed(description=":x: Your word, %s, isn't 6 or more characters long and wasn't "
