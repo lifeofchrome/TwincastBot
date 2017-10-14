@@ -67,12 +67,12 @@ class Twincast:  # Inside this class we make our own command.
                                                              self.twincasts_round_field: 1}).run(self.conn)
                                     print("added " + user_id + " to the db")
                                 print(r.table('users').get(user_id).run(self.conn))
-                                # r.table('words').insert({"word": word}).run(self.conn)
-                                if ctx.author.id != 107868153240883200:
-                                    await self.bot.get_channel(232353777053728770).\
-                                        send(f"**{word}** ({ctx.author.name})")
-                                else:
-                                    print("Twincast from chrome accepted, not published")
+                                r.table('words').insert({"word": word}).run(self.conn)
+                                # if ctx.author.id != 107868153240883200:
+                                await self.bot.get_channel(232353777053728770).\
+                                    send(f"**{word}** ({ctx.author.name})")
+                                # else:
+                                #     print("Twincast from chrome accepted, not published")
                                 await self.update_leaderboard()
                                 if self.check_round():
                                     await self.next_round()
@@ -184,29 +184,32 @@ class Twincast:  # Inside this class we make our own command.
         conn = r.connect(db='twincastbot')
         round_twincasts = 0
         for document in r.table('users').run(conn):
-            round_twincasts += document[self.twincasts_round_field]
+            if self.twincasts_round_field in document:
+                round_twincasts += document['%s' % self.twincasts_round_field]
         return round_twincasts > r.table('rounds').get(self.current_round['id']).run(conn)['total_twincasts'] / \
             r.table('rounds').get(self.current_round['id']).run(conn)['threshold']
 
     async def next_round(self):
         conn = r.connect(db='twincastbot')
         r.table('rounds').get(self.current_round['id']).update({'completed': True}).run(conn)
-        self.current_round = r.table('rounds').get(self.current_round['id'] + 1).run(conn)
-        self.bot.get_channel(232353685227831296).edit(
+        r.table('info').get(0).update({"current_round_id": self.current_round['id'] + 1}).run(conn)
+        self.current_round = r.table('rounds').get(r.table('info').get(0)['current_round_id']).run(conn)
+        await self.bot.get_channel(232353685227831296).edit(
             name=r.table('rounds').get(self.current_round['id']).run(conn)['word1'])
-        self.bot.get_channel(232353744702930944).edit(
+        await self.bot.get_channel(232353744702930944).edit(
             name=r.table('rounds').get(self.current_round['id']).run(conn)['word2'])
         for role in self.bot.get_guild(232353143038410753).roles:
             if role.name == 'new-round-notify':
-                role.edit(mentionable=True)
-        self.bot.get_channel(232353939666763786).send('Greetings, @new-round-notify! Round %s has started with words'
-                                                      '**%s** and **%s**. **%d**%% of the possible twincasts must be'
-                                                      'submitted to advance to the next round. Good luck!' %
-                                                      self.current_round['name'], self.current_round['word1'],
-                                                      self.current_round['word2'], self.current_round['threshold']*100)
+                await role.edit(mentionable=True)
+                roleid = role.id
+        annc = f"Greetings, <@&{roleid}>! Round {self.current_round['name']} has begun with words" \
+               f" {self.current_round['word1']} and {self.current_round['word2']}." \
+               f" {self.current_round['threshold']*100}% of the total possible twincasts must be submitted to start" \
+               f"the next round. Good luck!"
+        await self.bot.get_channel(232353939666763786).send(annc)
         for role in self.bot.get_guild(232353143038410753).roles:
             if role.name == 'new-round-notify':
-                role.edit(mentionable=False)
+                await role.edit(mentionable=False)
 
     async def create_global_leaderboard(self, lb: str):
         await self.bot.get_channel(232937599537381377).send(embed=Embed(
@@ -227,34 +230,22 @@ class Twincast:  # Inside this class we make our own command.
         prefixes = ['1st', '2nd', '3rd', '4th', '5th']
         lb_str = ""
         lb_round_str = ""
-        for i in range(0, 4):
+        for i in range(0, 5):
             if 'twincasts' in lb_table[i]:
                 lb_str = lb_str + f"{prefixes[i]}: {self.bot.get_user(int(lb_table[i]['id'])).name}, " \
                                   f"{lb_table[i]['twincasts']} twincasts\n"
+        for i in range(0, 5):
             if self.twincasts_round_field in lb_round_table[i]:
                 lb_round_str = lb_round_str + f"{prefixes[i]}: {self.bot.get_user(int(lb_round_table[i]['id'])).name}" \
                                               f", {lb_round_table[i][self.twincasts_round_field]} twincasts\n"
-
-        # lb_str = f"1st: {self.bot.get_user(int(lb_table[0]['id'])).name}, {lb_table[0]['twincasts']} twincasts\n" \
-        #          f"2nd: {self.bot.get_user(int(lb_table[1]['id'])).name}, {lb_table[1]['twincasts']} twincasts\n" \
-        #          f"3rd: {self.bot.get_user(int(lb_table[2]['id'])).name}, {lb_table[2]['twincasts']} twincasts\n" \
-        #          f"4th: {self.bot.get_user(int(lb_table[3]['id'])).name}, {lb_table[3]['twincasts']} twincasts\n" \
-        #          f"5th: {self.bot.get_user(int(lb_table[4]['id'])).name}, {lb_table[4]['twincasts']} twincasts"
-        # lb_round_str = f"1st: {self.bot.get_user(int(lb_round_table[0]['id'])).name}, " \
-        #                f"{lb_round_table[0][self.twincasts_round_field]} twincasts\n" \
-        #                f"2nd: {self.bot.get_user(int(lb_round_table[1]['id'])).name}, " \
-        #                f"{lb_round_table[1][self.twincasts_round_field]} twincasts\n" \
-        #                f"3rd: {self.bot.get_user(int(lb_round_table[2]['id'])).name}, " \
-        #                f"{lb_round_table[2][self.twincasts_round_field]} twincasts\n" \
-        #                f"4th: {self.bot.get_user(int(lb_round_table[3]['id'])).name}, " \
-        #                f"{lb_round_table[3][self.twincasts_round_field]} twincasts\n" \
-        #                f"5th: {self.bot.get_user(int(lb_round_table[4]['id'])).name}, " \
-        #                f"{lb_round_table[4][self.twincasts_round_field]} twincasts"
         round_msg = (await self.bot.get_channel(232937599537381377).history().flatten())[0]
         round_name = r.table('rounds').get(r.table('info').get(0)['current_round_id'].
                                            run(self.conn))['name'].run(self.conn)
-        await round_msg.edit(embed=Embed(title=f"Top Twincasters: Round {round_name}", description=lb_round_str,
-                                         colour=0x0000FF))
+        if round_msg.embed[0].title == f"Top Twincasters: Round {round_name}":
+            await round_msg.edit(embed=Embed(title=f"Top Twincasters: Round {round_name}", description=lb_round_str,
+                                             colour=0x0000FF))
+        else:
+            await self.create_round_leaderboard(round_name, lb_round_str)
         with open("global_msg_id.txt", 'r') as gmidfile:
             global_msg_id = gmidfile.read()
         await (await self.bot.get_channel(232937599537381377).get_message(global_msg_id)).edit(embed=Embed(
@@ -290,13 +281,42 @@ class Twincast:  # Inside this class we make our own command.
         else:
             failures = 0
 
+        rank = 0
+        for sorted_user in r.table('users').order_by(r.desc('twincasts')).run(self.conn):
+            rank += 1
+            if int(sorted_user['id']) == user.id:
+                break
+
         if user:
-            embed = Embed(
-                author=user.name + "'s Twincast info",
-                description="Twincasts: " + str(twincasts) + "\nSingle Casts: " +
-                            str(single_casts) + "\nFailures: " + str(failures),
-                colour=0xFFFF00)
-            embed.set_author(name=user.name + "'s Twincast info", icon_url=user.avatar_url)
+            embed = Embed(description=f"Global Twincast Ranking: {rank}", colour=0xFFFF00)
+            embed.set_author(name=str(user.name + "'s Twincast info"), icon_url=user.avatar_url)
+            embed.add_field(name="Global Stats", value="Twincasts: " + str(twincasts) + "\nSingle Casts: " +
+                            str(single_casts) + "\nFailures: " + str(failures))
+            round_doc = r.table('rounds').get(r.table('info').get(0).run(self.conn)['current_round_id']).run(self.conn)
+            rc = "dev-" + str(round_doc['id'])
+            if r.table('users').get(str(user.id)).run(self.conn):
+                if r.table('users').get(str(user.id)).has_fields(f'twincasts_round_{rc}').run(self.conn):
+                    twincasts = r.table('users').get(str(user.id)).run(self.conn)[f'twincasts_round_{rc}']
+                else:
+                    twincasts = 0
+            else:
+                twincasts = 0
+            if r.table('users').get(str(user.id)).run(self.conn):
+                if r.table('users').get(str(user.id)).has_fields(f'single_casts_round_{rc}').run(self.conn):
+                    single_casts = r.table('users').get(str(user.id)).run(self.conn)[f'single_casts_round_{rc}']
+                else:
+                    single_casts = 0
+            else:
+                single_casts = 0
+            if r.table('users').get(str(user.id)).run(self.conn):
+                if r.table('users').get(str(user.id)).has_fields(f'failures_round_{rc}').run(self.conn):
+                    failures = r.table('users').get(str(user.id)).run(self.conn)[f'failures_round_{rc}']
+                else:
+                    failures = 0
+            else:
+                failures = 0
+            embed.add_field(name=f"Latest Round Stats: {round_doc['name']}", value="Twincasts: "
+                            + str(twincasts) + "\nSingle Casts: " + str(single_casts) + "\nFailures: " + str(failures))
             await ctx.send(embed=embed)
 
 
