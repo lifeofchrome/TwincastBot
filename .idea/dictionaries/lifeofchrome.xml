@@ -3,6 +3,7 @@
     <words>
       <w>gmidfile</w>
       <w>leaderboard</w>
+      <w>notifyrole</w>
       <w>pinfo</w>
       <w>rethinkdb</w>
       <w>roleid</w>
@@ -12,6 +13,7 @@
       <w>twincasters</w>
       <w>twincasts</w>
       <w>userinfo</w>
+      <w>userroles</w>
     </words>
   </dictionary>
 </component>
