@@ -191,25 +191,34 @@ class Twincast:  # Inside this class we make our own command.
 
     async def next_round(self):
         conn = r.connect(db='twincastbot')
-        r.table('rounds').get(self.current_round['id']).update({'completed': True}).run(conn)
-        r.table('info').get(0).update({"current_round_id": self.current_round['id'] + 1}).run(conn)
-        self.current_round = r.table('rounds').get(r.table('info').get(0)['current_round_id']).run(conn)
-        await self.bot.get_channel(232353685227831296).edit(
-            name=r.table('rounds').get(self.current_round['id']).run(conn)['word1'])
-        await self.bot.get_channel(232353744702930944).edit(
-            name=r.table('rounds').get(self.current_round['id']).run(conn)['word2'])
-        for role in self.bot.get_guild(232353143038410753).roles:
-            if role.name == 'new-round-notify':
-                await role.edit(mentionable=True)
-                roleid = role.id
-        annc = f"Greetings, <@&{roleid}>! Round {self.current_round['name']} has begun with words" \
-               f" {self.current_round['word1']} and {self.current_round['word2']}." \
-               f" {self.current_round['threshold']*100}% of the total possible twincasts must be submitted to start" \
-               f"the next round. Good luck!"
-        await self.bot.get_channel(232353939666763786).send(annc)
-        for role in self.bot.get_guild(232353143038410753).roles:
-            if role.name == 'new-round-notify':
-                await role.edit(mentionable=False)
+        if not r.table('rounds').get(self.current_round['id'] + 1).is_empty().run(conn):
+            r.table('rounds').get(self.current_round['id']).update({'completed': True}).run(conn)
+            r.table('info').get(0).update({"current_round_id": self.current_round['id'] + 1}).run(conn)
+            self.current_round = r.table('rounds').get(r.table('info').get(0)['current_round_id']).run(conn)
+            await self.bot.get_channel(232353685227831296).edit(
+                name=r.table('rounds').get(self.current_round['id']).run(conn)['word1'])
+            await self.bot.get_channel(232353744702930944).edit(
+                name=r.table('rounds').get(self.current_round['id']).run(conn)['word2'])
+            msg = f"End of Round {r.table('rounds').get(self.current_round['id'] - 1)['name']}\n" \
+                  f"Start of Round {self.current_round['name']}"
+            await self.bot.get_channel(232353685227831296).send(msg)  # word 1
+            await self.bot.get_channel(232353744702930944).send(msg)  # word 2
+            await self.bot.get_channel(232353777053728770).send(msg)  # failures
+            await self.bot.get_channel(232353821932650496).send(msg)  # twincasts
+            for role in self.bot.get_guild(232353143038410753).roles:
+                if role.name == 'new-round-notify':
+                    await role.edit(mentionable=True)
+                    roleid = role.id
+            annc = f"Greetings, <@&{roleid}>! Round {self.current_round['name']} has begun with words" \
+                   f" {self.current_round['word1']} and {self.current_round['word2']}." \
+                   f" {self.current_round['threshold']*100}% of the total possible twincasts must be submitted to " \
+                   f"start the next round. Good luck!"
+            await self.bot.get_channel(232353939666763786).send(annc)
+            for role in self.bot.get_guild(232353143038410753).roles:
+                if role.name == 'new-round-notify':
+                    await role.edit(mentionable=False)
+        else:
+            self.bot.close()
 
     async def create_global_leaderboard(self, lb: str):
         await self.bot.get_channel(232937599537381377).send(embed=Embed(
