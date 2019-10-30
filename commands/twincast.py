@@ -30,6 +30,11 @@ class Twincast:  # Inside this class we make our own command.
     # @commands.command is used to initialize the command
     @commands.cooldown(1, 4, BucketType.user)
     async def submit(self, ctx, word: str):  # the function's name is our command name.
+        TWINCASTS_CHANNEL_ID = 232353777053728770
+        WORD_1_CHANNEL_ID = 232353685227831296
+        WORD_2_CHANNEL_ID = 232353744702930944
+        FAILURES_CHANNEL_ID = 232353821932650496
+        
         user_id = str(ctx.author.id)
 
         with open("english_words.txt") as word_file:
@@ -69,7 +74,7 @@ class Twincast:  # Inside this class we make our own command.
                                 print(r.table('users').get(user_id).run(self.conn))
                                 r.table('words').insert({"word": word}).run(self.conn)
                                 # if ctx.author.id != 107868153240883200:
-                                await self.bot.get_channel(232353777053728770).\
+                                await self.bot.get_channel(TWINCASTS_CHANNEL_ID).\
                                     send(f"**{word}** ({ctx.author.name})")
                                 # else:
                                 #     print("Twincast from chrome accepted, not published")
@@ -105,7 +110,7 @@ class Twincast:  # Inside this class we make our own command.
                                                              self.single_casts_round_field: 1}).run(self.conn)
                                     print("added " + user_id + " to the db")
                                 print(r.table('users').get(user_id).run(self.conn))
-                                await self.bot.get_channel(232353685227831296).send(f"**{word}** ({ctx.author.name})")
+                                await self.bot.get_channel(WORD_1_CHANNEL_ID).send(f"**{word}** ({ctx.author.name})")
 
                         elif re.match(self.current_round['pattern2'], word):
                             await ctx.send(embed=Embed(description=f":white_check_mark: Your word, {word}, "
@@ -135,7 +140,7 @@ class Twincast:  # Inside this class we make our own command.
                                                          self.single_casts_round_field: 1}).run(self.conn)
                                 print("added " + user_id + " to the db")
                             print(r.table('users').get(user_id).run(self.conn))
-                            await self.bot.get_channel(232353744702930944).send(f"**{word}** ({ctx.author.name})")
+                            await self.bot.get_channel(WORD_2_CHANNEL_ID).send(f"**{word}** ({ctx.author.name})")
 
                         else:
                             await ctx.send(embed=Embed(description=":no_entry_sign: Your word, %s, was submitted and "
@@ -164,7 +169,7 @@ class Twincast:  # Inside this class we make our own command.
                                                          self.failures_round_field: 1}).run(self.conn)
                                 print("added " + user_id + " to the db")
                             print(r.table('users').get(user_id).run(self.conn))
-                            await self.bot.get_channel(232353821932650496).send(f"**{word}** ({ctx.author.name})")
+                            await self.bot.get_channel(FAILURES_CHANNEL_ID).send(f"**{word}** ({ctx.author.name})")
                         r.table('words').insert({'word': word}).run(self.conn)
                     else:
                         await ctx.send(embed=Embed(description=":x: Your word, %s, isn't a word and wasn't submitted."
@@ -190,22 +195,29 @@ class Twincast:  # Inside this class we make our own command.
             r.table('rounds').get(self.current_round['id']).run(conn)['threshold']
 
     async def next_round(self):
+        TWINCASTS_CHANNEL_ID = 232353777053728770
+        WORD_1_CHANNEL_ID = 232353685227831296
+        WORD_2_CHANNEL_ID = 232353744702930944
+        FAILURES_CHANNEL_ID = 232353821932650496
+        ANNOUNCEMENTS_CHANNEL_ID = 232353939666763786
+        GUILD_ID = 232353143038410753
+        
         conn = r.connect(db='twincastbot')
         if not r.table('rounds').get(self.current_round['id'] + 1).is_empty().run(conn):
             r.table('rounds').get(self.current_round['id']).update({'completed': True}).run(conn)
             r.table('info').get(0).update({"current_round_id": self.current_round['id'] + 1}).run(conn)
             self.current_round = r.table('rounds').get(r.table('info').get(0)['current_round_id']).run(conn)
-            await self.bot.get_channel(232353685227831296).edit(
+            await self.bot.get_channel(WORD_1_CHANNEL_ID).edit(
                 name=r.table('rounds').get(self.current_round['id']).run(conn)['word1'])
-            await self.bot.get_channel(232353744702930944).edit(
+            await self.bot.get_channel(WORD_2_CHANNEL_ID).edit(
                 name=r.table('rounds').get(self.current_round['id']).run(conn)['word2'])
             msg = f"End of Round {r.table('rounds').get(self.current_round['id'] - 1)['name']}\n" \
                   f"Start of Round {self.current_round['name']}"
-            await self.bot.get_channel(232353685227831296).send(msg)  # word 1
-            await self.bot.get_channel(232353744702930944).send(msg)  # word 2
-            await self.bot.get_channel(232353777053728770).send(msg)  # failures
-            await self.bot.get_channel(232353821932650496).send(msg)  # twincasts
-            for role in self.bot.get_guild(232353143038410753).roles:
+            await self.bot.get_channel(WORD_1_CHANNEL_ID).send(msg)  # word 1
+            await self.bot.get_channel(WORD_2_CHANNEL_ID).send(msg)  # word 2
+            await self.bot.get_channel(TWINCASTS_CHANNEL_ID).send(msg)  # twincasts
+            await self.bot.get_channel(FAILURES_CHANNEL_ID).send(msg)  # failures
+            for role in self.bot.get_guild(GUILD_ID).roles:
                 if role.name == 'new-round-notify':
                     await role.edit(mentionable=True)
                     roleid = role.id
@@ -213,19 +225,19 @@ class Twincast:  # Inside this class we make our own command.
                    f" {self.current_round['word1']} and {self.current_round['word2']}." \
                    f" {self.current_round['threshold']*100}% of the total possible twincasts must be submitted to " \
                    f"start the next round. Good luck!"
-            await self.bot.get_channel(232353939666763786).send(annc)
-            for role in self.bot.get_guild(232353143038410753).roles:
+            await self.bot.get_channel(ANNOUNCEMENTS_CHANNEL_ID).send(annc)
+            for role in self.bot.get_guild(GUILD_ID).roles:
                 if role.name == 'new-round-notify':
                     await role.edit(mentionable=False)
         else:
             self.bot.close()
 
     async def create_global_leaderboard(self, lb: str):
-        await self.bot.get_channel(232937599537381377).send(embed=Embed(
+        await self.bot.get_channel(232937599537381377).send(embed=Embed( # leaderboard channel id
             title="Top Twincasters", description=lb))
 
     async def create_round_leaderboard(self, round_name: str, lb: str):
-        await self.bot.get_channel(232937599537381377).send(embed=Embed(title=f"Top Twincasters: Round {round_name}",
+        await self.bot.get_channel(232937599537381377).send(embed=Embed(title=f"Top Twincasters: Round {round_name}", # leaderboard channel id
                                                                         description=lb, colour=0x0000FF))
 
     async def update_leaderboard(self):
@@ -247,7 +259,7 @@ class Twincast:  # Inside this class we make our own command.
             if self.twincasts_round_field in lb_round_table[i]:
                 lb_round_str = lb_round_str + f"{prefixes[i]}: {self.bot.get_user(int(lb_round_table[i]['id'])).name}" \
                                               f", {lb_round_table[i][self.twincasts_round_field]} twincasts\n"
-        round_msg = (await self.bot.get_channel(232937599537381377).history().flatten())[0]
+        round_msg = (await self.bot.get_channel(232937599537381377).history().flatten())[0] # leaderboard channel id
         round_name = r.table('rounds').get(r.table('info').get(0)['current_round_id'].
                                            run(self.conn))['name'].run(self.conn)
         if round_msg.embed[0].title == f"Top Twincasters: Round {round_name}":
@@ -257,7 +269,7 @@ class Twincast:  # Inside this class we make our own command.
             await self.create_round_leaderboard(round_name, lb_round_str)
         with open("global_msg_id.txt", 'r') as gmidfile:
             global_msg_id = gmidfile.read()
-        await (await self.bot.get_channel(232937599537381377).get_message(global_msg_id)).edit(embed=Embed(
+        await (await self.bot.get_channel(232937599537381377).get_message(global_msg_id)).edit(embed=Embed( # leaderboard channel id
             title="Top Twincasters (Global)", description=lb_str, colour=0x0000FF))
 
     @commands.command(aliases=["stats", "pinfo", "user", "u"], description="Get Twincast info about a user",
