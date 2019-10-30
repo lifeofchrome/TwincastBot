@@ -17,10 +17,10 @@ class Misc:  # Inside this class we make our own command.
         notifyrole = discord.utils.get(self.bot.get_guild(232353143038410753).roles, name='new-round-notify')
         if notifyrole in ctx.author.roles:
             await ctx.author.remove_roles(notifyrole)
-            await ctx.send(":white_check_mark: No longer notifying you of new rounds.")
+            await ctx.send(embed=Embed(description=":white_check_mark: No longer notifying you of new rounds.", colour=0x00FF00))
         else:
             await ctx.author.add_roles(notifyrole)
-            await ctx.send(":white_check_mark: Now notifying you of new rounds.")
+            await ctx.send(embed=Embed(description=":white_check_mark: Now notifying you of new rounds.", colour=0x00FF00))
 
 
 def setup(bot):  # This function outside of the class initializes our extension/command and makes it readable by the
