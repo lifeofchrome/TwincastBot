@@ -5,9 +5,13 @@ Discord bot to automate Twincast group puzzles.
 Twincast is a group puzzle where the goal is to cast a word that satisfies two sets of criteria, which are referred to by an example word that fufills only that criteria.
 
 Example:
+
 **ball** and **squeak**
+
 In this example, ball's criteria is having two of the same letter and squeak's is having a triple vowel.
+
 The following words would cast **ball**: caterpillar, shatters, clapped
+
 The following words would cast **squeak**: hideout, quiet, adieu
 
 The following words would ***twincast***: erroneous, bouillon, tonneau
