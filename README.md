@@ -28,25 +28,6 @@ Currently, there are only 3 commands:
  - `!ping`: Gets the bot's ping.
  - `!notify`: Toggles notifications of new rounds.
 
-
-
-Channels:
-#announcements for the current round and round history
-#leaderboard for the leaderboard of successes per user on individual word casts and twincasts, round independent
-#twincasts for successful twincasts
-#pretentiousness for successful casts of the first word (note: channel name changes each round)
-#cooperated for successful casts of the second word (note: channel name changes each round)
-#failures for unsuccessful casts
-
-#bot-changelog for updates to @TwincastBot#4625 
-#gh-feed for updates to the GitHub repo for the bot
-
-#main for chatting
-#submit-words for submitting
-
-Permanent invite: https://discord.gg/BhpjVnX
-Word list used: http://www-01.sil.org/linguistics/wordlists/english/wordlist/wordsEn.txt
-
 ## Credits
 Primary development/management - lifeofchrome
 Idea - SethBling
